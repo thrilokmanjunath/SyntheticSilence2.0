@@ -1,4 +1,4 @@
-﻿// Real-Chrome end-to-end check of the unpacked extension.
+// Real-Chrome end-to-end check of the unpacked extension.
 //
 //   npm run e2e                  # deterministic: a stub backend, no network, no cost
 //   npm run e2e -- --live        # smoke test against the real backend on 127.0.0.1:8000
@@ -243,7 +243,7 @@ try {
     check('keyboard shortcut is declared', () => {
       const c = cmds.find((x) => x.name === 'check-selection');
       assert.ok(c, json(cmds));
-      assert.equal(c.shortcut, 'Alt+Shift+S');
+      assert.ok(c.shortcut === 'Alt+Shift+S' || c.shortcut === '⌥⇧S', `Unexpected shortcut: ${c.shortcut}`);
     });
   }
 
