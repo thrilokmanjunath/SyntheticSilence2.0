@@ -9,7 +9,7 @@
     "e2e": "tsc && node e2e/chrome-e2e.mjs",
     "gen:api": "node scripts/gen-api.mjs",
     "check:api": "node scripts/gen-api.mjs --check",
-    "test": "npm run check:api && tsc && node --test \"test/*.test.mjs\""
+    "test": "npm run check:api && tsc && node --test test/features.test.mjs test/present.test.mjs test/stream.test.mjs"
   },
   "devDependencies": {
     "@types/chrome": "^0.3.5",
