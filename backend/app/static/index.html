@@ -1541,6 +1541,9 @@
     selectPreset(1, document.querySelector('.specimen-btn.active'));
     inspectSystemHealth();
     setInterval(inspectSystemHealth, 8000);
+    if (new URLSearchParams(window.location.search).get('config') === 'open') {
+      openConfigModal();
+    }
   </script>
 </body>
 </html>
