@@ -394,6 +394,24 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/": {
+      "get": {
+        "operationId": "serve_index__get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Serve Index"
+      }
+    },
     "/api/v1/analyze": {
       "post": {
         "description": "Receives raw text from the Chrome Extension, runs it through the Research Pipeline,\nand returns the extracted claims with their insufficiency signals and explanations.",

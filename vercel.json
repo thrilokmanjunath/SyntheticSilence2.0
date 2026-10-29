@@ -1,21 +1,9 @@
 {
   "version": 2,
-  "builds": [
+  "rewrites": [
     {
-      "src": "backend/app/main.py",
-      "use": "@vercel/python",
-      "config": {
-        "maxDuration": 30
-      }
+      "source": "/(.*)",
+      "destination": "/api/index.py"
     }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "backend/app/main.py"
-    }
-  ],
-  "env": {
-    "PYTHONPATH": "backend"
-  }
+  ]
 }
