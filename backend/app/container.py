@@ -22,6 +22,7 @@ from app.services.analysis.temporal import TemporalAnalysisService
 from app.services.claim_service import ClaimService
 from app.services.cache import ResultCache
 from app.services.pipeline import ResearchPipeline
+from app.services.providers.gemini import GeminiProvider
 from app.services.providers.openrouter import OpenRouterProvider
 from app.services.ranking_service import EvidenceRankingService
 from app.services.retrieval_service import CompositeRetrievalService, OpenAlexRetrievalService
@@ -34,17 +35,15 @@ _lock = threading.Lock()
 _pipeline: Optional[ResearchPipeline] = None
 _error: Optional[str] = None
 _info: dict = {}
+_shared_embedder: Optional[EmbeddingService] = None
+_shared_density: Optional[DensityEstimator] = None
 
 
-def build_pipeline(settings: Settings) -> ResearchPipeline:
-    if not settings.openrouter_api_key:
-        raise ConfigurationError(
-            "OPENROUTER_API_KEY is not set. Add it to backend/.env (see backend/.env.example)."
-        )
+def _get_shared_manifold_components(settings: Settings):
+    global _shared_embedder, _shared_density
+    if _shared_embedder is not None and _shared_density is not None:
+        return _shared_embedder, _shared_density
 
-    # The density estimator is only meaningful once fitted on a reference manifold.
-    # An unfitted estimator returns zeros, which would read as "perfectly supported",
-    # so refuse to serve rather than fabricate the signal.
     if not settings.reference_manifold.is_file():
         raise ConfigurationError(
             f"Reference manifold not found at {settings.reference_manifold}. "
@@ -61,23 +60,42 @@ def build_pipeline(settings: Settings) -> ResearchPipeline:
             f"Reference manifold has {reference.shape[1]} dimensions but the embedding model produces {dim}."
         )
 
-    # Same estimator and defaults as scripts/run_experiment.py, so the served score
-    # is the one that was evaluated.
     density = DensityEstimator()
     density.fit(reference)
+    _shared_embedder = embedder
+    _shared_density = density
+    return embedder, density
 
-    llm = OpenRouterProvider(
-        api_key=settings.openrouter_api_key,
-        model=settings.openrouter_model,
-        base_url=settings.openrouter_base_url,
-    )
+
+def build_pipeline(settings: Settings, custom_llm: Optional[object] = None) -> ResearchPipeline:
+    embedder, density = _get_shared_manifold_components(settings)
+
+    if custom_llm is not None:
+        llm = custom_llm
+        model_name = getattr(custom_llm, "model", "custom")
+    elif settings.openrouter_api_key:
+        llm = OpenRouterProvider(
+            api_key=settings.openrouter_api_key,
+            model=settings.openrouter_model,
+            base_url=settings.openrouter_base_url,
+        )
+        model_name = settings.openrouter_model
+    elif settings.gemini_api_key:
+        llm = GeminiProvider(
+            api_key=settings.gemini_api_key,
+            model=settings.gemini_model,
+        )
+        model_name = settings.gemini_model
+    else:
+        raise ConfigurationError(
+            "OPENROUTER_API_KEY is not set. Add it to backend/.env (see backend/.env.example)."
+        )
 
     if settings.verdict_mode not in ("pooled", "stance"):
         raise ConfigurationError(f"SS_VERDICT_MODE must be 'pooled' or 'stance', got {settings.verdict_mode!r}.")
     use_stance = settings.verdict_mode == "stance"
     rank = settings.rank_evidence if settings.rank_evidence is not None else use_stance
 
-    # In stance mode support/conflict come from per-source stance, so the pooled NLI call is skipped.
     engine = CoreResearchEngine(
         embedding_service=embedder,
         density_estimator=density,
@@ -86,12 +104,11 @@ def build_pipeline(settings: Settings) -> ResearchPipeline:
     )
 
     log.info(
-        "Pipeline ready: %d reference vectors, model=%s, verdict_mode=%s, retrievers=%s",
-        len(reference), settings.openrouter_model, settings.verdict_mode, ",".join(settings.retrievers),
+        "Pipeline initialized: model=%s, verdict_mode=%s, retrievers=%s",
+        model_name, settings.verdict_mode, ",".join(settings.retrievers),
     )
-    # Anything that can change a result belongs in the cache key.
     fingerprint = {
-        "model": settings.openrouter_model,
+        "model": model_name,
         "mode": settings.verdict_mode,
         "retrievers": sorted(settings.retrievers),
         "rank": bool(rank),
@@ -108,7 +125,7 @@ def build_pipeline(settings: Settings) -> ResearchPipeline:
         "verdict_mode": settings.verdict_mode,
         "retrievers": list(settings.retrievers),
         "openalex_key": bool(settings.openalex_api_key),
-        "model": settings.openrouter_model,
+        "model": model_name,
         "cache": settings.cache_enabled,
     }
     return ResearchPipeline(
@@ -117,13 +134,25 @@ def build_pipeline(settings: Settings) -> ResearchPipeline:
         ranking_service=EvidenceRankingService(embedder=embedder if rank else None),
         core_engine=engine,
         temporal_service=TemporalAnalysisService(cutoff_year=settings.temporal_cutoff_year),
-        calibrator=ConformalCalibrator(),  # never fitted here: scores are reported NOT_CALIBRATED
+        calibrator=ConformalCalibrator(),
         explanation_service=ExplanationService(llm),
         max_claims=settings.max_claims,
         stance_service=StanceService(llm) if use_stance else None,
         cache=cache,
         cache_fingerprint=fingerprint,
     )
+
+
+def build_ephemeral_pipeline(provider_name: str, api_key: str, settings: Optional[Settings] = None) -> ResearchPipeline:
+    """Builds an isolated, ephemeral pipeline for a specific user-supplied request credential."""
+    cfg = settings or Settings.from_env()
+    if provider_name == "gemini":
+        llm = GeminiProvider(api_key=api_key, model=cfg.gemini_model)
+    elif provider_name == "openrouter":
+        llm = OpenRouterProvider(api_key=api_key, model=cfg.openrouter_model, base_url=cfg.openrouter_base_url)
+    else:
+        raise ConfigurationError(f"Unsupported provider: {provider_name}")
+    return build_pipeline(cfg, custom_llm=llm)
 
 
 def _build_retriever(settings: Settings):
@@ -152,13 +181,17 @@ def get_pipeline(settings: Optional[Settings] = None) -> ResearchPipeline:
         return _pipeline
 
 
+def is_ready() -> bool:
+    return _pipeline is not None
+
+
 def status() -> dict:
-    # `info` carries non-secret configuration so the extension can show what it is talking to.
     return {"pipeline_ready": _pipeline is not None, "pipeline_error": _error, "info": dict(_info) or None}
 
 
 def reset() -> None:
     """Test hook."""
-    global _pipeline, _error, _info
+    global _pipeline, _error, _info, _shared_embedder, _shared_density
     with _lock:
         _pipeline, _error, _info = None, None, {}
+        _shared_embedder, _shared_density = None, None

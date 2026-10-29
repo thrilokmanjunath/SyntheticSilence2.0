@@ -28,8 +28,8 @@ export interface paths {
         put?: never;
         /**
          * Analyze Text
-         * @description Receives raw text from the Chrome Extension, runs it through the Research Pipeline,
-         *     and returns the extracted claims with their insufficiency signals and explanations.
+         * @description Runs text through the Research Pipeline and returns extracted claims with
+         *     their insufficiency signals, empirical evidence, and explanations.
          */
         post: operations["analyze_text_api_v1_analyze_post"];
         delete?: never;
@@ -49,15 +49,30 @@ export interface paths {
         put?: never;
         /**
          * Analyze Stream
-         * @description Same analysis as /analyze, streamed as newline-delimited JSON so the first claim can be shown
-         *     while others are still running. Events:
-         *       {"type":"claims","claims":[...],"truncated":bool}      claims found, before any scoring
-         *       {"type":"claim","index":i,"result":ClaimResult}        one claim finished
-         *       {"type":"claim_error","index":i,"error":{kind,message}} one claim failed; the others continue
-         *       {"type":"error","error":{kind,message}}                 nothing could be analysed
-         *       {"type":"done"}                                         always the last line of a normal run
+         * @description Streamed analysis as newline-delimited JSON.
          */
         post: operations["analyze_stream_api_v1_analyze_stream_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/provider/validate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Validate Provider
+         * @description Validates a model provider API key with a minimal, bounded, non-generating check.
+         *     Never persists, writes to disk/database, or echoes the credential in logs or responses.
+         */
+        post: operations["validate_provider_api_v1_provider_validate_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -71,7 +86,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Health Check */
+        /**
+         * Health Check
+         * @description Sanitized health check endpoint: reports operational availability without leaking
+         *     environment variable values, file paths, credentials, or stack traces.
+         */
         get: operations["health_check_health_get"];
         put?: never;
         post?: never;
@@ -203,6 +222,25 @@ export interface components {
             /** Uncertainty */
             uncertainty?: number | null;
         };
+        /** ProviderValidateRequest */
+        ProviderValidateRequest: {
+            /** Api Key */
+            api_key: string;
+            /**
+             * Provider
+             * @enum {string}
+             */
+            provider: "openrouter" | "gemini";
+        };
+        /** ProviderValidateResponse */
+        ProviderValidateResponse: {
+            /** Message */
+            message: string;
+            /** Provider */
+            provider: string;
+            /** Valid */
+            valid: boolean;
+        };
         /** ValidationError */
         ValidationError: {
             /** Context */
@@ -248,7 +286,10 @@ export interface operations {
     analyze_text_api_v1_analyze_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-Provider-Key"?: string | null;
+                "X-Provider-Name"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -281,7 +322,10 @@ export interface operations {
     analyze_stream_api_v1_analyze_stream_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-Provider-Key"?: string | null;
+                "X-Provider-Name"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -298,6 +342,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    validate_provider_api_v1_provider_validate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProviderValidateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderValidateResponse"];
                 };
             };
             /** @description Validation Error */

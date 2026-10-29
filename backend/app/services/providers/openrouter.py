@@ -6,13 +6,9 @@ from typing import Any, Dict, List, Optional, Type, TypeVar
 import httpx
 from pydantic import ValidationError
 
-from app.services.llm_provider import LLMProvider
+from app.services.llm_provider import LLMProvider, LLMProviderError
 
 T = TypeVar("T")
-
-
-class LLMProviderError(RuntimeError):
-    """The LLM call failed or returned something unusable. Never contains credentials."""
 
 
 _FENCE = re.compile(r"^```(?:json)?\s*|\s*```$", re.IGNORECASE)

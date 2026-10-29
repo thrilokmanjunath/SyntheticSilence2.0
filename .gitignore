@@ -33,6 +33,7 @@ htmlcov/
 .tox/
 .nox/
 backend/.cache/
+artifacts/
 
 # Node & Frontend
 node_modules/
@@ -43,8 +44,11 @@ npm-debug.log*
 
 # Environment & Secrets
 .env
+.env.*
 *.env
+*.env.*
 !.env.example
+!*.env.example
 
 # OS Metadata
 .DS_Store

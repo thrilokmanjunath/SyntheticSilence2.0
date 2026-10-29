@@ -1,34 +1,149 @@
 import asyncio
 import json
 import logging
+from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+import httpx
+from fastapi import APIRouter, Depends, Header, HTTPException
 from fastapi.responses import StreamingResponse
 
 from app import container
 from app.config import ConfigurationError
-from app.models.api_schemas import AnalyzeRequest, AnalyzeResponse, ClaimResult, EvidenceItem
+from app.models.api_schemas import (
+    AnalyzeRequest,
+    AnalyzeResponse,
+    ClaimResult,
+    EvidenceItem,
+    ProviderValidateRequest,
+    ProviderValidateResponse,
+)
 from app.services.pipeline import ClaimErrorEvent, ClaimEvent, ClaimOutcome, ClaimsEvent, ResearchPipeline
-from app.services.providers.openrouter import LLMProviderError
+from app.services.llm_provider import LLMProviderError
 from app.services.retrieval_service import RetrievalBudgetError, RetrievalError
 
 log = logging.getLogger("syntheticsilence")
 router = APIRouter()
 
 
-async def get_pipeline() -> ResearchPipeline:
-    """Returns the shared pipeline, building it off the event loop on first use."""
+async def get_pipeline(
+    x_provider_key: Optional[str] = Header(None, alias="X-Provider-Key"),
+    x_provider_name: Optional[str] = Header(None, alias="X-Provider-Name"),
+) -> ResearchPipeline:
+    """
+    Returns the appropriate research pipeline.
+    If ephemeral provider credentials are sent in request headers, an isolated
+    ephemeral pipeline is constructed in memory for this request without persistence.
+    Otherwise, returns the shared pipeline initialized from server environment variables.
+    """
+    if x_provider_key and x_provider_name:
+        try:
+            return await asyncio.to_thread(
+                container.build_ephemeral_pipeline,
+                x_provider_name.lower().strip(),
+                x_provider_key.strip(),
+            )
+        except ConfigurationError as exc:
+            raise HTTPException(status_code=400, detail=f"Invalid ephemeral provider configuration: {exc}") from exc
+        except Exception as exc:
+            log.warning("Ephemeral pipeline construction failed: %s", type(exc).__name__)
+            raise HTTPException(status_code=500, detail="Failed to initialize requested provider.") from exc
+
     try:
         return await asyncio.to_thread(container.get_pipeline)
     except ConfigurationError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
 
+@router.post("/provider/validate", response_model=ProviderValidateResponse)
+async def validate_provider(req: ProviderValidateRequest):
+    """
+    Validates a model provider API key with a minimal, bounded, non-generating check.
+    Never persists, writes to disk/database, or echoes the credential in logs or responses.
+    """
+    key = req.api_key.strip()
+    if not key:
+        return ProviderValidateResponse(
+            valid=False,
+            provider=req.provider,
+            message="API key cannot be empty.",
+        )
+
+    if req.provider == "openrouter":
+        try:
+            async with httpx.AsyncClient(timeout=8.0) as client:
+                res = await client.get(
+                    "https://openrouter.ai/api/v1/auth/key",
+                    headers={"Authorization": f"Bearer {key}"},
+                )
+                if res.status_code == 200:
+                    return ProviderValidateResponse(
+                        valid=True,
+                        provider="openrouter",
+                        message="OpenRouter credentials verified successfully.",
+                    )
+                elif res.status_code in (401, 403):
+                    return ProviderValidateResponse(
+                        valid=False,
+                        provider="openrouter",
+                        message="Authentication failed: Invalid or expired OpenRouter API key.",
+                    )
+                else:
+                    return ProviderValidateResponse(
+                        valid=False,
+                        provider="openrouter",
+                        message=f"OpenRouter returned HTTP status {res.status_code}.",
+                    )
+        except httpx.RequestError as exc:
+            return ProviderValidateResponse(
+                valid=False,
+                provider="openrouter",
+                message=f"Unable to reach OpenRouter validation service ({type(exc).__name__}).",
+            )
+
+    elif req.provider == "gemini":
+        try:
+            async with httpx.AsyncClient(timeout=8.0) as client:
+                res = await client.get(
+                    "https://generativelanguage.googleapis.com/v1beta/models",
+                    params={"key": key, "pageSize": 1},
+                )
+                if res.status_code == 200:
+                    return ProviderValidateResponse(
+                        valid=True,
+                        provider="gemini",
+                        message="Google Gemini credentials verified successfully.",
+                    )
+                elif res.status_code in (400, 403):
+                    return ProviderValidateResponse(
+                        valid=False,
+                        provider="gemini",
+                        message="Authentication failed: Invalid or unauthorized Google Gemini API key.",
+                    )
+                else:
+                    return ProviderValidateResponse(
+                        valid=False,
+                        provider="gemini",
+                        message=f"Google Gemini returned HTTP status {res.status_code}.",
+                    )
+        except httpx.RequestError as exc:
+            return ProviderValidateResponse(
+                valid=False,
+                provider="gemini",
+                message=f"Unable to reach Google Gemini validation service ({type(exc).__name__}).",
+            )
+
+    return ProviderValidateResponse(
+        valid=False,
+        provider=req.provider,
+        message=f"Unsupported provider: {req.provider}",
+    )
+
+
 @router.post("/analyze", response_model=AnalyzeResponse)
 async def analyze_text(request: AnalyzeRequest, pipeline: ResearchPipeline = Depends(get_pipeline)):
     """
-    Receives raw text from the Chrome Extension, runs it through the Research Pipeline,
-    and returns the extracted claims with their insufficiency signals and explanations.
+    Runs text through the Research Pipeline and returns extracted claims with
+    their insufficiency signals, empirical evidence, and explanations.
     """
     if not request.source_text.strip():
         raise HTTPException(status_code=422, detail="source_text is empty.")
@@ -67,13 +182,7 @@ def _line(payload: dict) -> bytes:
 @router.post("/analyze/stream")
 async def analyze_stream(request: AnalyzeRequest, pipeline: ResearchPipeline = Depends(get_pipeline)):
     """
-    Same analysis as /analyze, streamed as newline-delimited JSON so the first claim can be shown
-    while others are still running. Events:
-      {"type":"claims","claims":[...],"truncated":bool}      claims found, before any scoring
-      {"type":"claim","index":i,"result":ClaimResult}        one claim finished
-      {"type":"claim_error","index":i,"error":{kind,message}} one claim failed; the others continue
-      {"type":"error","error":{kind,message}}                 nothing could be analysed
-      {"type":"done"}                                         always the last line of a normal run
+    Streamed analysis as newline-delimited JSON.
     """
     if not request.source_text.strip():
         raise HTTPException(status_code=422, detail="source_text is empty.")

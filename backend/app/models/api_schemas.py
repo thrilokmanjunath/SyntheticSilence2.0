@@ -36,3 +36,12 @@ class AnalyzeResponse(BaseModel):
     results: List[ClaimResult]
     # True when the text held more claims than the service analyses per request.
     truncated: bool = False
+
+class ProviderValidateRequest(BaseModel):
+    provider: Literal["openrouter", "gemini"]
+    api_key: str = Field(min_length=1, max_length=256)
+
+class ProviderValidateResponse(BaseModel):
+    valid: bool
+    provider: str
+    message: str
