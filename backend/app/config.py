@@ -33,7 +33,7 @@ class Settings:
     openrouter_model: str
     openrouter_base_url: str
     gemini_api_key: str | None = None
-    gemini_model: str = "gemini-1.5-flash"
+    gemini_model: str = "gemini-3.5-flash"
     environment: str = "production"
     allowed_origins: tuple = ()
     reference_manifold: Path = BACKEND_DIR.parent / "data" / "manifolds" / "fever_train_v1.npy"
@@ -63,7 +63,7 @@ class Settings:
             openrouter_model=os.environ.get("OPENROUTER_MODEL", "openai/gpt-4o-mini"),
             openrouter_base_url=os.environ.get("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"),
             gemini_api_key=os.environ.get("GEMINI_API_KEY") or None,
-            gemini_model=os.environ.get("GEMINI_MODEL", "gemini-1.5-flash"),
+            gemini_model=os.environ.get("GEMINI_MODEL", "gemini-3.5-flash"),
             environment=os.environ.get("ENVIRONMENT", "production").lower(),
             allowed_origins=origins,
             # Same manifold the E0 experiments were fitted on.

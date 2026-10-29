@@ -22,14 +22,14 @@ class GeminiProvider(LLMProvider):
     def __init__(
         self,
         api_key: str,
-        model: str = "gemini-1.5-flash",
+        model: str = "gemini-3.5-flash",
         timeout: float = 45.0,
         client: Optional[httpx.AsyncClient] = None,
     ):
         if not api_key:
             raise ValueError("GeminiProvider requires an API key")
         self._api_key = api_key
-        # Strip provider prefix if user inputs 'models/gemini-1.5-flash'
+        # Strip provider prefix if user inputs 'models/gemini-3.5-flash'
         self.model = model.replace("models/", "")
         self._client = client or httpx.AsyncClient(timeout=timeout)
         self.calls = 0
@@ -82,9 +82,9 @@ class GeminiProvider(LLMProvider):
             if not candidates:
                 raise LLMProviderError("Google Gemini returned no candidate completions.")
             parts = candidates[0].get("content", {}).get("parts", [])
-            if not parts or "text" not in parts[0]:
+            raw_text = "".join(p.get("text", "") for p in parts if "text" in p).strip()
+            if not raw_text:
                 raise LLMProviderError("Google Gemini candidate content is empty.")
-            raw_text = parts[0]["text"]
             clean_json = _extract_json(raw_text)
             return schema_class.model_validate_json(clean_json)  # type: ignore[attr-defined]
         except (ValidationError, ValueError, KeyError) as exc:
