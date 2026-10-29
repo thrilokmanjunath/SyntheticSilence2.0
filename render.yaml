@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: synthetic-silence-2
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --app-dir backend --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: SS_REFERENCE_MANIFOLD
+        value: data/manifolds/fever_train_v1.npy

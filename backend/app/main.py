@@ -2,7 +2,9 @@ import asyncio
 import contextlib
 import logging
 
+from pathlib import Path
 from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import container
@@ -48,6 +50,16 @@ app.add_middleware(
 )
 
 app.include_router(routes.router, prefix="/api/v1")
+
+
+INDEX_HTML = Path(__file__).parent / "static" / "index.html"
+
+
+@app.get("/", response_class=HTMLResponse)
+async def serve_index():
+    if INDEX_HTML.is_file():
+        return HTMLResponse(content=INDEX_HTML.read_text(encoding="utf-8"))
+    return HTMLResponse("<h1>Synthetic Silence 2.0 Backend</h1><p><a href='/docs'>Swagger API Docs</a></p>")
 
 
 @app.get("/health")
