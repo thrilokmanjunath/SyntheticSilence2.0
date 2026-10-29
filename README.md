@@ -298,7 +298,16 @@ python scripts/run_f2_matched_controls.py
 
 ---
 
-## 9. Citation
+## 9. Authors & Ownership
+
+- **Thrilok M** — Department of Data Science, CHRIST (Deemed to be University) ([GitHub](https://github.com/thrilokmanjunath) • [Email](mailto:thrilokmanjunath@gmail.com))
+- **Piush Kole** — Department of Data Science, CHRIST (Deemed to be University)
+
+This research project and all associated code, experimental manifests, and documentation are conceived, authored, and owned by **Thrilok M** and **Piush Kole**.
+
+---
+
+## 10. Citation
 
 If you use Synthetic Silence in your research, please cite:
 
@@ -314,7 +323,7 @@ If you use Synthetic Silence in your research, please cite:
 
 ---
 
-## 10. License
+## 11. License
 
 - Source code is released under the [MIT License](LICENSE).
 - Manuscripts and documentation are provided for academic research and evaluation.
