@@ -1,14 +1,44 @@
 {
   "manifest_version": 3,
   "name": "SyntheticSilence2.0",
-  "version": "1.0.0",
-  "description": "Evidence Insufficiency Engine UI",
+  "version": "1.1.0",
+  "description": "Check whether the sources behind a claim back it up, push against it, or stay silent.",
+  "minimum_chrome_version": "116",
   "permissions": [
     "activeTab",
+    "contextMenus",
+    "scripting",
+    "sidePanel",
     "storage"
   ],
+  "host_permissions": [
+    "http://127.0.0.1/*",
+    "http://localhost/*"
+  ],
   "action": {
-    "default_popup": "popup.html"
+    "default_title": "Check evidence",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png"
+    }
+  },
+  "commands": {
+    "check-selection": {
+      "suggested_key": {
+        "default": "Alt+Shift+S"
+      },
+      "description": "Check the selected text"
+    }
+  },
+  "side_panel": {
+    "default_path": "popup.html"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
   },
   "background": {
     "service_worker": "dist/background.js",

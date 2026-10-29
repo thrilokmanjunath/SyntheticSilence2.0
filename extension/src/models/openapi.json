@@ -1,0 +1,490 @@
+{
+  "components": {
+    "schemas": {
+      "AnalyzeRequest": {
+        "properties": {
+          "source_text": {
+            "maxLength": 8000,
+            "minLength": 1,
+            "title": "Source Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_text"
+        ],
+        "title": "AnalyzeRequest",
+        "type": "object"
+      },
+      "AnalyzeResponse": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/ClaimResult"
+            },
+            "title": "Results",
+            "type": "array"
+          },
+          "truncated": {
+            "default": false,
+            "title": "Truncated",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "title": "AnalyzeResponse",
+        "type": "object"
+      },
+      "ClaimResult": {
+        "properties": {
+          "claim": {
+            "$ref": "#/components/schemas/ExtractedClaim"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceItem"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "explanation": {
+            "title": "Explanation",
+            "type": "string"
+          },
+          "leaning": {
+            "anyOf": [
+              {
+                "enum": [
+                  "supports",
+                  "refutes"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Leaning"
+          },
+          "signal": {
+            "$ref": "#/components/schemas/InsufficiencySignal"
+          },
+          "sources_considered": {
+            "default": 0,
+            "title": "Sources Considered",
+            "type": "integer"
+          },
+          "sources_relevant": {
+            "default": 0,
+            "title": "Sources Relevant",
+            "type": "integer"
+          },
+          "verdict": {
+            "default": "insufficient",
+            "enum": [
+              "supported",
+              "refuted",
+              "mixed",
+              "insufficient",
+              "no_sources"
+            ],
+            "title": "Verdict",
+            "type": "string"
+          }
+        },
+        "required": [
+          "claim",
+          "signal",
+          "explanation"
+        ],
+        "title": "ClaimResult",
+        "type": "object"
+      },
+      "EvidenceItem": {
+        "properties": {
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "default": "scholarly",
+            "enum": [
+              "scholarly",
+              "encyclopedia"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "publication_year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Publication Year"
+          },
+          "quote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quote"
+          },
+          "relevance": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relevance"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          },
+          "stance": {
+            "anyOf": [
+              {
+                "enum": [
+                  "supports",
+                  "refutes",
+                  "neutral",
+                  "irrelevant"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stance"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "required": [
+          "id",
+          "text"
+        ],
+        "title": "EvidenceItem",
+        "type": "object"
+      },
+      "ExtractedClaim": {
+        "properties": {
+          "context": {
+            "description": "The surrounding text or context where the claim was found",
+            "title": "Context",
+            "type": "string"
+          },
+          "id": {
+            "description": "Unique identifier for the extracted claim",
+            "title": "Id",
+            "type": "string"
+          },
+          "original_text": {
+            "description": "The exact text of the claim as found in the source",
+            "title": "Original Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "original_text",
+          "context"
+        ],
+        "title": "ExtractedClaim",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "InsufficiencySignal": {
+        "properties": {
+          "calibration_status": {
+            "default": "NOT_CALIBRATED",
+            "title": "Calibration Status",
+            "type": "string"
+          },
+          "construction_family_estimate": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Construction Family Estimate"
+          },
+          "contradiction_level": {
+            "title": "Contradiction Level",
+            "type": "number"
+          },
+          "evidence_coverage": {
+            "title": "Evidence Coverage",
+            "type": "number"
+          },
+          "insufficiency_signal": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Insufficiency Signal"
+          },
+          "representation_density": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Representation Density"
+          },
+          "retrieval_confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retrieval Confidence"
+          },
+          "semantic_support": {
+            "title": "Semantic Support",
+            "type": "number"
+          },
+          "temporal_coverage": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temporal Coverage"
+          },
+          "uncertainty": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uncertainty"
+          }
+        },
+        "required": [
+          "evidence_coverage",
+          "semantic_support",
+          "contradiction_level"
+        ],
+        "title": "InsufficiencySignal",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "Evidence Insufficiency Engine API",
+    "title": "SyntheticSilence2.0 Backend",
+    "version": "1.0.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/analyze": {
+      "post": {
+        "description": "Receives raw text from the Chrome Extension, runs it through the Research Pipeline,\nand returns the extracted claims with their insufficiency signals and explanations.",
+        "operationId": "analyze_text_api_v1_analyze_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalyzeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalyzeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Analyze Text"
+      }
+    },
+    "/api/v1/analyze/stream": {
+      "post": {
+        "description": "Same analysis as /analyze, streamed as newline-delimited JSON so the first claim can be shown\nwhile others are still running. Events:\n  {\"type\":\"claims\",\"claims\":[...],\"truncated\":bool}      claims found, before any scoring\n  {\"type\":\"claim\",\"index\":i,\"result\":ClaimResult}        one claim finished\n  {\"type\":\"claim_error\",\"index\":i,\"error\":{kind,message}} one claim failed; the others continue\n  {\"type\":\"error\",\"error\":{kind,message}}                 nothing could be analysed\n  {\"type\":\"done\"}                                         always the last line of a normal run",
+        "operationId": "analyze_stream_api_v1_analyze_stream_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalyzeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Analyze Stream"
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "health_check_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health Check"
+      }
+    }
+  }
+}

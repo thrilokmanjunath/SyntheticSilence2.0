@@ -31,6 +31,28 @@ def test_calibration_fitted():
     assert calibrated_signal.calibration_status == "CALIBRATED_90_PCT"
     assert calibrated_signal.insufficiency_signal == 0.5
 
+def test_raw_score_direction_matches_b8_baseline():
+    """Higher density (farther from reference) and higher entropy must both raise the score."""
+    def score(density, uncertainty):
+        s = InsufficiencySignal(
+            evidence_coverage=1.0, semantic_support=0.5, contradiction_level=0.0,
+            representation_density=density, retrieval_confidence=1.0 - density, uncertainty=uncertainty,
+        )
+        return ConformalCalibrator().calibrate(s).insufficiency_signal
+
+    assert score(0.8, 0.5) == pytest.approx((0.8 + 0.5) / 2)
+    assert score(0.9, 0.5) > score(0.4, 0.5)
+    assert score(0.5, 0.9) > score(0.5, 0.2)
+
+
+def test_raw_score_handles_missing_components():
+    s = InsufficiencySignal(evidence_coverage=0.0, semantic_support=0.0, contradiction_level=0.0)
+    assert ConformalCalibrator().calibrate(s).insufficiency_signal is None
+
+    s = InsufficiencySignal(evidence_coverage=0.0, semantic_support=0.0, contradiction_level=0.0, uncertainty=1.0)
+    assert ConformalCalibrator().calibrate(s).insufficiency_signal == 1.0
+
+
 def test_calibration_empty_set():
     calibrator = ConformalCalibrator(alpha=0.1)
     calibrator.fit([])

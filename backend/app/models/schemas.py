@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Optional
+from typing import Literal, Optional
 from pydantic import BaseModel, Field
 
 class ConstructionFamily(str, Enum):
@@ -20,6 +20,11 @@ class Evidence(BaseModel):
     source_url: Optional[str] = None
     publication_year: Optional[int] = None
     construction_family: ConstructionFamily
+    # Where the source comes from; shown in the UI and used for dedupe across retrievers.
+    kind: Literal["scholarly", "encyclopedia"] = "scholarly"
+    title: Optional[str] = None
+    # Claim-source embedding cosine similarity, set by the ranking stage.
+    relevance: Optional[float] = None
 
 class InsufficiencySignal(BaseModel):
     evidence_coverage: float

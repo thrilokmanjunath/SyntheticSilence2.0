@@ -1,0 +1,10 @@
+# Synthetic Silence 2.0 - Core Backend & Research Dependencies
+-r backend/requirements.txt
+
+# Development, Testing & Reproducibility
+-r backend/requirements-dev.txt
+
+# Paper Drafting, Table Formatting & Figure Rendering
+python-docx>=1.1.0
+matplotlib>=3.7.0
+scipy>=1.10.0

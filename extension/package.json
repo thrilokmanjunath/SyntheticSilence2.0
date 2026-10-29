@@ -2,11 +2,18 @@
   "name": "syntheticsilence2-extension",
   "version": "1.0.0",
   "description": "Chrome Extension for SyntheticSilence2.0",
+  "type": "module",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "e2e": "tsc && node e2e/chrome-e2e.mjs",
+    "gen:api": "node scripts/gen-api.mjs",
+    "check:api": "node scripts/gen-api.mjs --check",
+    "test": "npm run check:api && tsc && node --test \"test/*.test.mjs\""
   },
   "devDependencies": {
-    "typescript": "^5.0.0",
-    "@types/chrome": "^0.0.246"
+    "@types/chrome": "^0.3.5",
+    "openapi-typescript": "^7.13.0",
+    "typescript": "^5.0.0"
   }
 }

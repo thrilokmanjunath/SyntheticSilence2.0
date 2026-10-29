@@ -1,0 +1,34 @@
+cff-version: 1.2.0
+message: "If you use or build upon the Synthetic Silence research methodology, benchmarks, or software, please cite it as below."
+title: "Synthetic Silence 2.0: Evaluating Claim-Space Density for Evidence Insufficiency Under Construction and Reference-Manifold Shift"
+authors:
+  - family-names: "Manjunath"
+    given-names: "Thrilok"
+    email: "thrilokmanjunath@gmail.com"
+    affiliation: "Department of Data Science, Christ (Deemed to be University), Bangalore"
+  - family-names: "Kole"
+    given-names: "Piush"
+    affiliation: "Department of Data Science, Christ (Deemed to be University), Bangalore"
+version: "2.0.0"
+date-released: "2026-10-08"
+url: "https://github.com/thrilokmanjunath/SyntheticSilence2.0"
+repository-code: "https://github.com/thrilokmanjunath/SyntheticSilence2.0"
+keywords:
+  - "fact-verification"
+  - "hallucination-detection"
+  - "uncertainty-quantification"
+  - "out-of-distribution"
+  - "information-voids"
+  - "natural-language-inference"
+  - "fever"
+  - "averitec"
+preferred-citation:
+  type: article
+  authors:
+    - family-names: "Manjunath"
+      given-names: "Thrilok"
+    - family-names: "Kole"
+      given-names: "Piush"
+  title: "Synthetic Silence: Evaluating Claim-Space Density for Evidence Insufficiency Under Construction and Reference-Manifold Shift"
+  year: 2026
+  url: "https://github.com/thrilokmanjunath/SyntheticSilence2.0"

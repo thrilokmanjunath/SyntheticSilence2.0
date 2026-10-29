@@ -1,0 +1,80 @@
+{
+  "config": {
+    "variant": "stance_wiki",
+    "n": 150,
+    "seed": 43,
+    "model": "openai/gpt-4o-mini",
+    "concurrency": 4,
+    "budget_usd": 2.0,
+    "extra": {
+      "git_sha": "c7f8c57",
+      "verdict_mode": "stance",
+      "retrievers": [
+        "wikipedia"
+      ],
+      "paired_with": null
+    }
+  },
+  "metrics": {
+    "n_total": 150,
+    "n_scored": 27,
+    "n_errors": 123,
+    "accuracy": 0.5555555555555556,
+    "accuracy_ci95": [
+      0.37312719479576884,
+      0.7241440232992717
+    ],
+    "macro_f1": 0.5543936092955701,
+    "decisive_accuracy": 0.5789473684210527,
+    "decisive_accuracy_ci95": [
+      0.36275551465160105,
+      0.7685837960796962
+    ],
+    "coverage": 0.9259259259259259,
+    "mixed_rate": 0.0,
+    "per_class": {
+      "SUPPORTS": {
+        "precision": 0.5714285714285714,
+        "recall": 0.6153846153846154,
+        "f1": 0.5925925925925927,
+        "support": 13
+      },
+      "REFUTES": {
+        "precision": 0.75,
+        "recall": 0.5,
+        "f1": 0.6,
+        "support": 6
+      },
+      "NOT ENOUGH INFO": {
+        "precision": 0.4444444444444444,
+        "recall": 0.5,
+        "f1": 0.47058823529411764,
+        "support": 8
+      }
+    },
+    "confusion": {
+      "SUPPORTS": {
+        "SUPPORTS": 8,
+        "REFUTES": 1,
+        "NOT ENOUGH INFO": 4,
+        "MIXED": 0
+      },
+      "REFUTES": {
+        "SUPPORTS": 2,
+        "REFUTES": 3,
+        "NOT ENOUGH INFO": 1,
+        "MIXED": 0
+      },
+      "NOT ENOUGH INFO": {
+        "SUPPORTS": 4,
+        "REFUTES": 0,
+        "NOT ENOUGH INFO": 4,
+        "MIXED": 0
+      }
+    },
+    "median_latency_s": 7.325682299997425
+  },
+  "cost_usd": 0.0109284,
+  "budget_stopped": false,
+  "incomplete": false
+}

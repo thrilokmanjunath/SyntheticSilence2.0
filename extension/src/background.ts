@@ -1,40 +1,39 @@
-import { AnalyzeResponse } from './models/types.js';
+// Service worker: right-click menu and keyboard shortcut. Analysis itself runs in the panel
+// (see api.ts), so no request depends on this worker staying alive.
+import { COMMAND_ID, handleMenuClick, handleShortcut, MENU_ID, type WorkerDeps } from './handoff.js';
+import { readPageSelection } from './inject.js';
+
+const deps: WorkerDeps = {
+  openPanel: (target) => {
+    // Must be called straight from the user gesture, before any await.
+    if (target.tabId !== undefined) return chrome.sidePanel.open({ tabId: target.tabId });
+    if (target.windowId !== undefined) return chrome.sidePanel.open({ windowId: target.windowId });
+    return Promise.resolve();
+  },
+  store: (key, value) => chrome.storage.session.set({ [key]: value }),
+  readSelection: async (tabId) => {
+    const [injected] = await chrome.scripting.executeScript({ target: { tabId }, func: readPageSelection });
+    return typeof injected?.result === 'string' ? injected.result : '';
+  },
+  now: () => Date.now(),
+};
 
 chrome.runtime.onInstalled.addListener(() => {
-  console.log('SyntheticSilence2.0 Extension Installed');
-});
-
-// Listener for messages from the popup or content scripts
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === 'analyze_text') {
-    analyzeTextWithBackend(request.text)
-      .then(data => sendResponse({ success: true, data }))
-      .catch(error => sendResponse({ success: false, error: error.message }));
-    
-    return true; // Indicates asynchronous response
-  }
-});
-
-async function analyzeTextWithBackend(text: string): Promise<AnalyzeResponse> {
-  const backendUrl = "http://127.0.0.1:8000/api/v1/analyze";
-  
-  try {
-    const response = await fetch(backendUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ source_text: text })
+  chrome.contextMenus.removeAll(() => {
+    chrome.contextMenus.create({
+      id: MENU_ID,
+      title: 'Check evidence for “%s”',
+      contexts: ['selection'],
     });
+  });
+});
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (info.menuItemId !== MENU_ID) return;
+  void handleMenuClick(info.selectionText, tab, deps);
+});
 
-    const data = await response.json();
-    return data as AnalyzeResponse;
-  } catch (error) {
-    console.error("Error communicating with backend:", error);
-    throw error;
-  }
-}
+chrome.commands.onCommand.addListener((command, tab) => {
+  if (command !== COMMAND_ID) return;
+  void handleShortcut(tab, deps);
+});
