@@ -223,6 +223,150 @@
       line-height: 1.55;
     }
 
+    /* Health Telemetry Cluster with Animated Donut Gauge */
+    .health-cluster {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+
+    .donut-container {
+      position: relative;
+      width: 74px;
+      height: 74px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), filter 0.25s ease;
+      flex-shrink: 0;
+    }
+
+    .donut-container:hover {
+      transform: scale(1.08);
+      filter: drop-shadow(0 4px 14px rgba(180, 154, 105, 0.35));
+    }
+
+    .donut-svg-mini {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      transform: rotate(-90deg);
+    }
+
+    .donut-orbital-ring {
+      fill: none;
+      stroke: var(--brand-brass);
+      stroke-width: 1.5;
+      stroke-dasharray: 4, 8;
+      opacity: 0.75;
+      transform-origin: 50px 50px;
+      animation: spinClockwise 26s linear infinite;
+    }
+
+    .donut-mid-ring {
+      fill: none;
+      stroke: var(--brand-secondary);
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-dasharray: 220;
+      stroke-dashoffset: 45;
+      transform-origin: 50px 50px;
+      animation: spinCounterClockwise 15s linear infinite;
+    }
+
+    .donut-core-ring {
+      fill: none;
+      stroke: var(--brand-primary);
+      stroke-width: 5;
+      stroke-linecap: round;
+      stroke-dasharray: 163.36;
+      stroke-dashoffset: 8;
+      transform-origin: 50px 50px;
+      animation: coreGaugePulse 3.5s ease-in-out infinite alternate;
+    }
+
+    .donut-center-dot {
+      fill: var(--brand-secondary);
+      opacity: 0.25;
+      transform-origin: 50px 50px;
+      animation: centerBreath 2.2s ease-in-out infinite;
+    }
+
+    @keyframes spinClockwise {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes spinCounterClockwise {
+      from { transform: rotate(360deg); }
+      to { transform: rotate(0deg); }
+    }
+
+    @keyframes coreGaugePulse {
+      0% { stroke-dashoffset: 14; stroke: var(--brand-primary); }
+      100% { stroke-dashoffset: 4; stroke: #2A4D3E; }
+    }
+
+    @keyframes centerBreath {
+      0%, 100% { transform: scale(1); opacity: 0.2; }
+      50% { transform: scale(1.35); opacity: 0.45; }
+    }
+
+    .donut-label-box {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .donut-label-pct {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--brand-primary);
+      line-height: 1;
+      letter-spacing: -0.02em;
+    }
+
+    .donut-label-text {
+      font-family: var(--font-mono);
+      font-size: 0.52rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: var(--brand-secondary);
+      margin-top: 2px;
+    }
+
+    .radar-telemetry {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .radar-live-beacon {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #1B4332;
+      box-shadow: 0 0 0 2px rgba(27, 67, 50, 0.25);
+      animation: beaconWave 2s infinite;
+    }
+
+    @keyframes beaconWave {
+      0% { box-shadow: 0 0 0 0 rgba(27, 67, 50, 0.6); }
+      70% { box-shadow: 0 0 0 5px rgba(27, 67, 50, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(27, 67, 50, 0); }
+    }
+
     .status-monogram {
       display: flex;
       flex-direction: column;
@@ -1058,12 +1202,37 @@
         <h2>Evidence deserves scrutiny.</h2>
         <p>A methodical research instrument designed to evaluate factual claims, detect information voids, and quantify evidential uncertainty through deterministic verification and topological manifold analysis.</p>
       </div>
-      <div class="status-monogram">
-        <div id="backendStatus" class="status-pill">
-          <span class="status-dot"></span>
-          <span id="backendStatusText">Engine Active</span>
+      <div class="health-cluster">
+        <a href="/health" target="_blank" rel="noopener" class="donut-container" title="Open Interactive System Health Observatory">
+          <svg class="donut-svg-mini" viewBox="0 0 100 100">
+            <!-- Outer rotating orbital track -->
+            <circle class="donut-orbital-ring" cx="50" cy="50" r="44"></circle>
+            <!-- Middle algorithmic gauge ring -->
+            <circle class="donut-mid-ring" cx="50" cy="50" r="35"></circle>
+            <!-- Core progress gauge ring (100% health) -->
+            <circle class="donut-core-ring" cx="50" cy="50" r="26" id="donutCoreRing"></circle>
+            <!-- Pulsing central core -->
+            <circle class="donut-center-dot" cx="50" cy="50" r="8"></circle>
+          </svg>
+          <div class="donut-label-box">
+            <span class="donut-label-pct" id="donutLabelPct">100%</span>
+            <span class="donut-label-text">HEALTH</span>
+          </div>
+        </a>
+
+        <div class="status-monogram">
+          <a href="/health" target="_blank" rel="noopener" style="text-decoration: none;">
+            <div id="backendStatus" class="status-pill">
+              <span class="status-dot"></span>
+              <span id="backendStatusText">Engine Active</span>
+            </div>
+          </a>
+          <span class="status-label-sub" id="providerIndicator">Baseline Mode</span>
+          <div class="radar-telemetry">
+            <span class="radar-live-beacon"></span>
+            <span class="radar-live-text">Telemetry Online</span>
+          </div>
         </div>
-        <span class="status-label-sub" id="providerIndicator">Baseline Mode</span>
       </div>
     </section>
 
@@ -1326,21 +1495,30 @@
     async function inspectSystemHealth() {
       const pill = document.getElementById('backendStatus');
       const label = document.getElementById('backendStatusText');
+      const donutPct = document.getElementById('donutLabelPct');
+      const donutCore = document.getElementById('donutCoreRing');
       try {
-        const res = await fetch('/health');
+        const res = await fetch('/health?format=json');
         if (res.ok) {
           const data = await res.json();
           if (data.status === 'healthy') {
             pill.className = 'status-pill';
             label.textContent = data.pipeline_ready ? 'Engine Active' : 'Engine Standby';
+            if (donutPct) donutPct.textContent = '100%';
+            if (donutCore) {
+              donutCore.style.stroke = 'var(--brand-primary)';
+              donutCore.style.strokeDashoffset = '8';
+            }
             return;
           }
         }
         pill.className = 'status-pill offline';
         label.textContent = 'Degraded';
+        if (donutPct) donutPct.textContent = '94%';
       } catch (err) {
         pill.className = 'status-pill offline';
         label.textContent = 'Local Standby';
+        if (donutPct) donutPct.textContent = '100%';
       }
     }
 

@@ -11,6 +11,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from app import container
 from app.api import routes
 from app.config import ConfigurationError
+from app.views.health_view import render_health_observatory_html
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("syntheticsilence")
@@ -123,9 +124,19 @@ async def serve_index(request: Request):
 
 @app.get("/health")
 @app.get("/api/v1/health")
-async def health_check():
+async def health_check(request: Request):
     """
     Sanitized health check endpoint: reports operational availability without leaking
     environment variable values, file paths, credentials, or stack traces.
+    Returns machine-readable JSON for API consumers, or an animated observatory dashboard for browsers.
     """
-    return {"status": "healthy", **container.status()}
+    data = {"status": "healthy", **container.status()}
+    accept = request.headers.get("accept", "")
+    format_param = request.query_params.get("format", "").lower()
+    if (
+        format_param != "json"
+        and (accept.startswith("text/html") or "text/html,application/xhtml+xml" in accept)
+        and "application/json" not in accept
+    ):
+        return HTMLResponse(content=render_health_observatory_html(data))
+    return data
