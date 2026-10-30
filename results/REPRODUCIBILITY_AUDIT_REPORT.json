@@ -1,0 +1,73 @@
+{
+  "reproduction_timestamp": "2026-10-30T22:42:38.907134",
+  "status": "PASS",
+  "target_metric_1": {
+    "name": "E0_FEVER_B3_AUROC",
+    "expected": 0.5463,
+    "reproduced": 0.5463,
+    "verified": true
+  },
+  "target_metric_2": {
+    "name": "E1_AVeriTeC_retrieved_insufficient_AUROC",
+    "expected": 0.2754,
+    "reproduced": 0.2754,
+    "verified": true,
+    "scientific_meaning": "Sub-class AUROC for retrieved_insufficient evidence condition under manifold shift"
+  },
+  "table": [
+    {
+      "Benchmark": "E0: FEVER Synthetic",
+      "Condition": "missing_evidence",
+      "N": 18631,
+      "AUROC": "0.5463",
+      "95% CI": "[0.5366, 0.5564]",
+      "Baseline": "0.5000",
+      "Interpretation": "Modest density signal on templated claims"
+    },
+    {
+      "Benchmark": "E1: AVeriTeC Real-World",
+      "Condition": "Overall TEST (mixed)",
+      "N": 500,
+      "AUROC": "0.3545",
+      "95% CI": "[0.2925, 0.4215]",
+      "Baseline": "0.5000",
+      "Interpretation": "Severe cross-domain degradation"
+    },
+    {
+      "Benchmark": "E1: AVeriTeC Sub-Class",
+      "Condition": "retrieved_insufficient",
+      "N": 35,
+      "AUROC": "0.2754",
+      "95% CI": "Inverted",
+      "Baseline": "0.5000",
+      "Interpretation": "Catastrophic signal inversion (metric 0.2754)"
+    },
+    {
+      "Benchmark": "F1: Cross-Manifold",
+      "Condition": "AVeriTeC -> FEVER",
+      "N": "Cross",
+      "AUROC": "0.4959",
+      "95% CI": "Near chance",
+      "Baseline": "0.5000",
+      "Interpretation": "Collapses to random chance"
+    },
+    {
+      "Benchmark": "F1: Cross-Manifold",
+      "Condition": "FEVER -> AVeriTeC",
+      "N": "Cross",
+      "AUROC": "0.5019",
+      "95% CI": "Near chance",
+      "Baseline": "0.5000",
+      "Interpretation": "Collapses to random chance"
+    },
+    {
+      "Benchmark": "F2: Matched Controls",
+      "Condition": "1:1 Mahalanobis (29 pairs)",
+      "N": 58,
+      "AUROC": "0.3353",
+      "95% CI": "[0.2007, 0.4804]",
+      "Baseline": "0.5000",
+      "Interpretation": "Inversion persists after covariate matching"
+    }
+  ]
+}

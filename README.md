@@ -230,20 +230,30 @@ python -m uvicorn app.main:app --app-dir backend --port 8000 --reload
 ```
 Check health: `curl http://localhost:8000/health`.
 
-### 5.3 Building the Chrome Extension
+### 5.4 Benchmark Reproduction & Research Demonstration
+
+#### Single-Command Offline Benchmark Reproduction
+All frozen research manifests and empirical metrics can be verified offline with zero API calls:
 
 ```bash
-cd extension
-npm install
-npm test
-npm run build
+# Verify frozen manifests, checksums, E0 (0.5463) and E1 (0.2754) metrics
+python scripts/reproduce_benchmark.py
 ```
-To load in Chrome:
-1. Navigate to `chrome://extensions`.
-2. Toggle **Developer mode** on (top right).
-3. Click **Load unpacked** and select the `extension/` directory.
+This generates `results/REPRODUCIBILITY_AUDIT_REPORT.json` validating:
+- **Target Metric 1**: FEVER E0 B3 kNN Density AUROC = `0.5463` (95% CI: `[0.5366, 0.5564]`, Prevalence Baseline: `0.2403`).
+- **Target Metric 2**: AVeriTeC E1 `retrieved_insufficient` Sub-Class AUROC = `0.2754` (Severe Signal Inversion where insufficient claims cluster closer to the reference manifold).
+- **Cross-Manifold Diagnostics (F1)**: FEVER $\to$ AVeriTeC AUROC = `0.5019`; AVeriTeC $\to$ FEVER AUROC = `0.4959` (collapses to random chance).
+- **Matched Controls (F2)**: 1:1 Mahalanobis matched pairs AUROC = `0.3353` (inversion persists after balancing length and lexical diversity).
 
----
+#### Interactive Research Demo (Streamlit)
+Launch the local demonstration interface:
+```bash
+streamlit run streamlit_app.py
+```
+*Features:* Claim & retrieved evidence inspection, deterministic stance & quote evaluation, conformal prediction sets ($1 - \alpha$), and preset benchmark cases reproducing the empirical signal inversion.
+
+#### Video Walkthrough
+A complete 2-minute video presentation storyboard and recording guide is available in [`docs/WALKTHROUGH_SCRIPT.md`](docs/WALKTHROUGH_SCRIPT.md).
 
 ## 6. Testing & Reproducibility
 
