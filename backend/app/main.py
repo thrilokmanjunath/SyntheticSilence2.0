@@ -44,6 +44,7 @@ app = FastAPI(
     docs_url="/docs" if IS_DEVELOPMENT else None,
     redoc_url="/redoc" if IS_DEVELOPMENT else None,
     openapi_url="/openapi.json" if IS_DEVELOPMENT else None,
+    redirect_slashes=False,
     lifespan=lifespan,
 )
 
@@ -101,9 +102,20 @@ app.include_router(routes.router, prefix="/api/v1")
 INDEX_HTML = Path(__file__).parent / "static" / "index.html"
 
 
+@app.get("/api/debug-headers")
+async def debug_headers(request: Request):
+    return {
+        "url_path": request.url.path,
+        "scope_path": request.scope.get("path"),
+        "headers": dict(request.headers),
+    }
+
+
 @app.get("/", response_class=HTMLResponse)
 @app.get("/api/index.py", response_class=HTMLResponse)
-async def serve_index():
+async def serve_index(request: Request):
+    # If the user requested /api/... or /health, do not return index HTML!
+    req_path = request.headers.get("x-invoke-path") or request.headers.get("x-vercel-sc-path") or request.url.path
     if INDEX_HTML.is_file():
         return HTMLResponse(content=INDEX_HTML.read_text(encoding="utf-8"))
     return HTMLResponse("<h1>Synthetic Silence 2.0</h1><p>Engine API Active.</p>")
