@@ -72,3 +72,5 @@ Thumbs.db
 
 # Disposable / One-Off Build Caches
 review1/ref/x/
+.vercel
+.env*

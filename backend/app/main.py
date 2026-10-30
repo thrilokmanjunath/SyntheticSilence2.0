@@ -102,6 +102,7 @@ INDEX_HTML = Path(__file__).parent / "static" / "index.html"
 
 
 @app.get("/", response_class=HTMLResponse)
+@app.get("/api/index.py", response_class=HTMLResponse)
 async def serve_index():
     if INDEX_HTML.is_file():
         return HTMLResponse(content=INDEX_HTML.read_text(encoding="utf-8"))
@@ -109,6 +110,7 @@ async def serve_index():
 
 
 @app.get("/health")
+@app.get("/api/v1/health")
 async def health_check():
     """
     Sanitized health check endpoint: reports operational availability without leaking
