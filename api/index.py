@@ -1,5 +1,6 @@
 import sys
 from pathlib import Path
+from urllib.parse import parse_qs
 
 # Set up paths so the backend application is discoverable
 root = Path(__file__).resolve().parent.parent
@@ -14,19 +15,15 @@ from app.main import app as fastapi_app  # noqa: E402
 async def app(scope, receive, send):
     """
     ASGI middleware wrapper for Vercel serverless functions.
-    Normalizes the request URL path from Vercel's x-matched-path or
-    strips the function entrypoint prefix (/api/index.py) to match
-    FastAPI route declarations.
+    Restores the exact client request path from the query string (__path__)
+    populated during Vercel route rewriting, ensuring FastAPI routes match accurately.
     """
     if scope.get("type") == "http":
-        headers = dict(scope.get("headers", []))
-        matched_path = headers.get(b"x-matched-path")
-        if matched_path:
-            raw = matched_path.decode("utf-8").split("?")[0]
-            if raw and raw != "/api/index.py":
-                scope["path"] = raw if raw.startswith("/") else f"/{raw}"
+        raw_qs = scope.get("query_string", b"").decode("utf-8", errors="ignore")
+        qs = parse_qs(raw_qs)
+        if "__path__" in qs and qs["__path__"]:
+            scope["path"] = qs["__path__"][0]
         elif scope.get("path", "").startswith("/api/index.py"):
             stripped = scope["path"][len("/api/index.py"):]
             scope["path"] = stripped if stripped.startswith("/") else (f"/{stripped}" if stripped else "/")
     await fastapi_app(scope, receive, send)
-
